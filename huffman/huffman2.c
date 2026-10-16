@@ -42,6 +42,9 @@ void inserirOrdenadoLista(Lista *lista, No *novoNo){
     return;
 }
 
+/**
+ * Pega cada elemento da tabela pra preencher a lista(ordenadamente usando a função acima)
+ */
 void preencherLista(unsigned long long tabela[], Lista* lista){
     No *novoNo;
     for(int i=0; i < 256; i++){
@@ -82,7 +85,9 @@ void imprimirLista(Lista* lista){
     
 }
 
-
+/**
+ * Abrir arquivo e montar a tabela de quantas vezes cada um deles aparece
+ */
 unsigned long long montarTabelaFrequencia(FILE *arquivo, unsigned long long tabelaFrequencia[256]){
 
     if(arquivo == NULL){
@@ -116,6 +121,9 @@ void imprimirTabelaFrequencia(unsigned long long tabelaFrequencia[]){
     return;
 }
 
+/**
+ * Necessário pra criação da árvore de Huffman
+ */
 No* removerNoInicio(Lista *lista){
     No *aux = NULL;
 
@@ -129,6 +137,9 @@ No* removerNoInicio(Lista *lista){
     return aux;
 }
 
+/**
+ * Remove dois primeiros nós da lista, cria um novo nó e faz esquerda e direita apontarem para os nós retirados
+ */
 No* gerarArvore(Lista* lista){
     No *primeiro, *segundo, *novoNo;
     while((*(unsigned long long*)lista->tamanho) > 1){
@@ -176,7 +187,9 @@ void imprimirArvore(No *raiz, unsigned long long tamanho){
     }
 }
 
-//contada em arestas
+/**
+ * Quantidade de arestas da árvore
+ */
 int alturaArvore(No* raiz){
     int esq, dir;
 
@@ -194,7 +207,9 @@ int alturaArvore(No* raiz){
     }
 }
 
-//criando uma matriz dinamica
+/**
+ * Cria uma matriz dinamica para o dicionario
+ */
 char** alocarDicionario(int alturaColunas){
     char **dicionario;
 
@@ -207,6 +222,9 @@ char** alocarDicionario(int alturaColunas){
     return dicionario;
 }
 
+/**
+ * Preenche o dicionario com o codigo de cada aresta
+ */
 void gerarDicionario(char** dicionario, No* raiz, char *codigo, int colunas){
     if(raiz == NULL){
         return;
@@ -241,6 +259,9 @@ void imprimirDicionario(char** dicionario){
     }
 }
 
+/**
+ * Salvando a árvore para o cabeçalho
+ */
 void salvarPreOrdem(FILE *arquivo, No* raiz, unsigned int *tamanhoBits){
     int tamanhoArvore = 0;
 
@@ -267,6 +288,9 @@ void salvarPreOrdem(FILE *arquivo, No* raiz, unsigned int *tamanhoBits){
     return;
 }
 
+/**
+ * coloca a nova codificaçao no arquivo.huff e retorna o lixo que precisamos pro cabeçalho
+ */
 int compactar(char** dicionario, FILE *entrada, FILE *saida){
     unsigned char guardadorDeBits = 0;
     int quantidadeBits = 0;
@@ -297,6 +321,9 @@ int compactar(char** dicionario, FILE *entrada, FILE *saida){
     return lixo;    
 }
 
+/**
+ * junta o tamanho da arvore, o lixo no cabeçalho do arquivo.huff
+ */
 void montarCabecalho(unsigned int tamanhoArvore, int lixo, FILE *saida){
     unsigned char cabecalho[2];
 
@@ -319,6 +346,9 @@ void imprimirCodificado(char** dicionario, FILE *entrada){
     return;
 }
 
+/**
+ * Recria a arvore para a descompactaçao
+ */
 No* refazerArvore(FILE* arquivo, unsigned int *tamanhoArvore){
 
     if(*tamanhoArvore == 0){
@@ -351,6 +381,9 @@ No* refazerArvore(FILE* arquivo, unsigned int *tamanhoArvore){
     return novoNo;
 }
 
+/**
+ * Cria um novo arquivo descompactado
+ */
 //ESTUDARRR
 void descompactar(FILE *entrada, FILE *saida, No *raiz, int lixo){
     No *atual = raiz;
@@ -392,90 +425,119 @@ void descompactar(FILE *entrada, FILE *saida, No *raiz, int lixo){
 
 
 int main(){
-    char nomeArquivo[200];
-    unsigned long long tabelaFrequencia[256] = {0};
-    Lista listaBase;
-    No* arvore;
-
-    printf("Digite o nome do arquivo, incluido terminações(.pdf, .jpeg, .mp4...)\n");
-    scanf("%s", nomeArquivo);
-
-    FILE *entrada = fopen(nomeArquivo, "rb");
-    FILE *saida = fopen("codificado.huff", "wb");
-
-    montarTabelaFrequencia(entrada, tabelaFrequencia);
-    imprimirTabelaFrequencia(tabelaFrequencia);
-
-    iniciarLista(&listaBase);
-    preencherLista(tabelaFrequencia, &listaBase);
-    imprimirLista(&listaBase);
-
-    arvore = gerarArvore(&listaBase);
-    if(arvore != NULL){
-        printf("\n\tARVORE\n\n");
-        imprimirArvore(arvore, 0);
-    }else{
-        printf("Erro ao construir a arvore");
-    }
+    int decisao;
+    printf("Você gostaria de (digite o número):\n1. Compactar um arquivo.\n2. Descompactar um arquivo\n3.Compactar e descompactar um arquivo.\n");
+    scanf("%d", &decisao);
 
 
-    int colunas = alturaArvore(arvore);
-    char** dicionario;
-    char codigo[256] = {0};
+    /**
+    * COMPACTAR
+    */
+    if (decisao == 1 || decisao == 3) {
+        char nomeArquivo[200];
+        unsigned long long tabelaFrequencia[256] = {0};
+        Lista listaBase;
+        No* arvore;
 
-    dicionario = alocarDicionario(colunas);
-    gerarDicionario(dicionario, arvore, codigo, 0);
-    imprimirDicionario(dicionario);
+        printf("Digite o nome do arquivo a ser compactado, incluindo extensao (.pdf, .jpeg, .mp4...):\n");
+        scanf("%s", nomeArquivo);
 
-    rewind(entrada);
-    imprimirCodificado(dicionario, entrada);
+        FILE *entrada = fopen(nomeArquivo, "rb");
+        if (entrada == NULL) {
+            printf("Erro ao abrir o arquivo de entrada para compactacao!\n");
+            return 1;
+        }
 
-    rewind(entrada);
-    unsigned int tamanhoArvoreEmNos = 0;
-    
-    //montagem do cabeçalho
-    //reservar espaço pros dois primeiros bytes (lixo e tamanho da arvore)
-    fputc(0,saida);
-    fputc(0,saida);
+        FILE *saida = fopen("codificado.huff", "wb");
+        if (saida == NULL) {
+            printf("Erro ao criar o arquivo codificado.huff!\n");
+            fclose(entrada);
+            return 1;
+        }
 
-    salvarPreOrdem(saida, arvore, &tamanhoArvoreEmNos);
-    int lixo = compactar(dicionario, entrada, saida);
-    montarCabecalho(tamanhoArvoreEmNos, lixo, saida);
-    
-    fclose(entrada);
-    fclose(saida);
+        montarTabelaFrequencia(entrada, tabelaFrequencia);
+        imprimirTabelaFrequencia(tabelaFrequencia);
+
+        iniciarLista(&listaBase);
+        preencherLista(tabelaFrequencia, &listaBase);
+        imprimirLista(&listaBase);
+
+        arvore = gerarArvore(&listaBase);
+        if (arvore != NULL) {
+            printf("\n\tARVORE\n\n");
+            imprimirArvore(arvore, 0);
+        } else {
+            printf("Erro ao construir a arvore\n");
+            fclose(entrada);
+            fclose(saida);
+            return 1;
+        }
+
+        int colunas = alturaArvore(arvore);
+        char** dicionario;
+        char codigo[256] = {0};
+
+        dicionario = alocarDicionario(colunas);
+        gerarDicionario(dicionario, arvore, codigo, 0);
+        imprimirDicionario(dicionario);
+
+        rewind(entrada);
+        imprimirCodificado(dicionario, entrada);
+
+        rewind(entrada);
+        unsigned int tamanhoArvoreEmNos = 0;
+
+        // Montagem do cabeçalho
+        // Reservar espaço para os dois primeiros bytes (lixo e tamanho da arvore)
+        fputc(0, saida);
+        fputc(0, saida);
+
+        salvarPreOrdem(saida, arvore, &tamanhoArvoreEmNos);
+        int lixo = compactar(dicionario, entrada, saida);
+        montarCabecalho(tamanhoArvoreEmNos, lixo, saida);
+
+        fclose(entrada);
+        fclose(saida);
 
     printf("\n\tARQUIVO COMPACTADO\n\n");
-
-    //DESCOMPACTAR
-
-    char nomeDescompactado[200];
-    printf("Digite o nome do seu arquivo descompactado(com extensao): \n");
-    scanf("%s", nomeDescompactado);
-
-    FILE *arquivoHuff = fopen("codificado.huff", "rb");
-    FILE *arquivoDescompactado = fopen(nomeDescompactado, "wb");
-
-    if(arquivoHuff == NULL || arquivoDescompactado == NULL){
-        printf("Erro ao abrir arquivos para descompactacao!\n");
-        return 1;
     }
 
-    unsigned char cabecalho[2];
-    cabecalho[0] = fgetc(arquivoHuff);
-    cabecalho[1] = fgetc(arquivoHuff);
+    /**
+     * DESCOMPACTAR
+    */
+    if (decisao == 2 || decisao == 3) {
+        char nomeDescompactado[200];
 
-    //estudar!!
-    int lixoExtraido = cabecalho[0] >> 5;
-    unsigned int tamanhoArvoreExtraida = ((cabecalho[0] & 7) << 8) | cabecalho[1];
+        printf("Digite o nome para o arquivo descompactado (com extensao): \n");
+        scanf("%s", nomeDescompactado);
 
-    No *arvoreReconstruida = refazerArvore(arquivoHuff, &tamanhoArvoreExtraida);
-    descompactar
-    (arquivoHuff, arquivoDescompactado, arvoreReconstruida, lixoExtraido);
+        FILE *arquivoHuff = fopen("codificado.huff", "rb");
+        FILE *arquivoDescompactado = fopen(nomeDescompactado, "wb");
 
-    fclose(arquivoHuff);
-    fclose(arquivoDescompactado);
+        if (arquivoHuff == NULL || arquivoDescompactado == NULL) {
+            printf("Erro ao abrir arquivos para descompactacao!\n");
+            return 1;
+        }
+
+        unsigned char cabecalho[2];
+        cabecalho[0] = fgetc(arquivoHuff);
+        cabecalho[1] = fgetc(arquivoHuff);
+
+        int lixoExtraido = cabecalho[0] >> 5;
+        unsigned int tamanhoArvoreExtraida = ((cabecalho[0] & 7) << 8) | cabecalho[1];
+
+        No *arvoreReconstruida = refazerArvore(arquivoHuff, &tamanhoArvoreExtraida);
+        descompactar(arquivoHuff, arquivoDescompactado, arvoreReconstruida, lixoExtraido);
+
+        fclose(arquivoHuff);
+        fclose(arquivoDescompactado);
 
     printf("ARQUIVO DESCOMPACTADO!");
+    }
+
+    if (decisao < 1 || decisao > 3) {
+        printf("Opcao invalida!\n");
+    }
+
     return 0;
 }
