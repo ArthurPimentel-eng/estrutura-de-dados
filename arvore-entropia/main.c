@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#define MAX 1024
-
+#include <math.h>
+#define MAX_CHAR 1024
+#define MAX_HEIGHT 5
+ 
 typedef struct
 {
     char* name;
@@ -11,35 +13,76 @@ typedef struct
     int maximo;
 }tabela;
 
-void setup(tabela** coluna, char* token, int ind)
-{  
-    if(coluna[ind] == NULL)
+/*typedef struct node
+{
+
+    int** afirmacoes;
+    node** filhos;
+}
+
+no* montar_arvore(tabela** tradutor, int** tabela, int ind_desejado)
+{
+
+}*/
+
+//traduçao da tabela de afirmaçoes em inteiros simples de computar as equaçoes de bbbb
+int tradutor(tabela** trad, char* token, int coluna)
+{
+    for(int i = 0; i < trad[coluna]->nvalores; i++)
     {
-        coluna[ind] = malloc(sizeof(tabela));
-        coluna[ind]->name = token;
-        coluna[ind]->refs = realloc(NULL, n);
-        coluna[ind]->nvalores = 0;
-        coluna[ind]->maximo = 0;
+        if(strncmp(trad[coluna]->refs[i], token, sizeof(token)) == 0)
+        {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+//calculo da entropia d
+/*double entropia(double total, double amostra)
+{
+    return log10(amostra/total)/log10(2) - entropia(next, indice + 1);
+}*/
+
+void setup(tabela** t, char* token, int ind)
+{  
+    if(t[ind] == NULL)
+    {
+        t[ind] = malloc(sizeof(tabela));
+        strcpy(token, t[ind]->name);
+        t[ind]->refs = NULL;
+        t[ind]->nvalores = 0;
+        t[ind]->maximo = 0;
     }
     else
     {
-        if(coluna[ind]->nvalores == coluna[ind]->maximo)
+        if(t[ind]->nvalores == t[ind]->maximo)
         {
-            coluna[ind]->maximo = coluna[ind]->maximo ? coluna[ind]->maximo * 2 : 4;
-            coluna[ind]->refs = realloc(coluna[ind]->refs, coluna[ind]->maximo);
+            int antigo = t[ind]->maximo;
+            int novo = antigo ? antigo * 2 : 4;
+
+            char** tmp = realloc(t[ind]->refs, novo * sizeof(char*));
+            if(tmp == NULL)
+            {
+                perror("realloc");
+                exit(1);
+            }
+            t[ind]->refs = tmp;
+            t[ind]->maximo = novo;
+
+            memset(t[ind]->refs + antigo, 0, (novo - antigo) * sizeof(char*));
         }
 
-        int i = 0;
-        while(coluna[ind]->refs[i] != NULL)
-        {
-            if(strncmp(token, coluna[ind]->refs[i], sizeof(token)) != 0)
+        for(int i = 0; i < t[ind]->nvalores; i++)
+        {                           
+            if(strcmp(token, t[ind]->refs[i]) == 0)
             {
                 return;
             }
-            i++;
         }
-        coluna[ind]->refs[i] = token;
-        coluna[ind]->nvalores++;
+        strcpy(token, t[ind]->refs[i]);
+        t[ind]->nvalores++;
     }
 }
 
@@ -59,32 +102,89 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    tabela** coluna = malloc(sizeof(tabela*));
+    tabela** trad = NULL;
+    int tamanho = 0; 
+    int ncolunas = 0;
 
-    char line[MAX];
+    char line[MAX_CHAR];
     fgets(line, sizeof(line), f);
     line[strcspn(line, "\r\n")] = '\0';
 
-    char* tok;
-    tok = strtok(line, ",");
+    char* token;
+    token = strtok(line, ",");
 
-    while(tok != NULL)
+    while(token != NULL)
     {
-        setup(coluna, tok, ind);
-        tok = strtok(NULL, ",");
-        i++;
+        if(ncolunas == tamanho)
+        {
+            int antigo = tamanho;
+            tamanho = tamanho ? tamanho + 2 : 4;
+
+            tabela** novo = realloc(trad, tamanho * sizeof(tabela*));
+            if(novo == NULL)
+            {
+                perror("realloc");
+                return 1;
+            }
+
+            memset(novo + antigo, 0, (tamanho - antigo) * sizeof(tabela*));
+            trad = novo;
+            
+        }  
+        setup(trad, token, ncolunas);
+        token = strtok(NULL, ",");
+        ncolunas++;
     }
+
+    int nlinhas = 0;
+    int j = 0;
 
     while(fgets(line, sizeof(line), f) != NULL)
     {
-        int j = 0;
-        for(tok = strtok(line, ","), tok != NULL, tok = strtok(NULL, ","))
+        line[strcspn(line, "\r\n")] = '\0';
+        for(token = strtok(line, ","); token != NULL; token = strtok(NULL, ","))
         {
-            new_variable(coluna, tok, j);
+            setup(trad, token, j);
             j++;
+        }
+        
+        j = 0;
+        nlinhas++;
+    }
+
+    rewind(f);
+
+    int** m = malloc(nlinhas * sizeof(int*));
+    if(m == NULL)
+    {
+        perror("malloc");
+        exit(1);
+    }
+
+    for(int i = 0; i < nlinhas; i++)
+    {
+        m[i] = malloc(ncolunas * sizeof(int));
+        if(m[i] == NULL)
+        {
+            perror("malloc");
+            exit(1);
         }
     }
 
+    fgets(line, sizeof(line), f);
+
+    for(int linha = 0; linha < nlinhas; linha++)
+    {
+        fgets(line,sizeof(line), f);
+        line[strcspn(line, "\r\n")] = '\0';
+        token = strtok(line, ",");
+        int coluna = 0;
+        for(token = strtok(line, ","); token != NULL && coluna < ncolunas; token = strtok(NULL, ","))
+        {
+            m[linha][coluna] = tradutor(trad, token, coluna);
+            coluna++;
+        }
+    }
 
     fclose(f);
 
