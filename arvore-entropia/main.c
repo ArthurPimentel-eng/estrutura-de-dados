@@ -13,24 +13,25 @@ typedef struct
     int maximo;
 }tabela;
 
-/*typedef struct node
+typedef struct
+{
+    int* col_usados;
+
+}
+
+typedef struct node
 {
 
-    int** afirmacoes;
+
     node** filhos;
 }
 
-no* montar_arvore(tabela** tradutor, int** tabela, int ind_desejado)
-{
-
-}*/
-
-//traduçao da tabela de afirmaçoes em inteiros simples de computar as equaçoes de bbbb
+//traduçao da tabela de afirmaçoes em inteiros simples de computar as equaçoes de ganho de informação
 int tradutor(tabela** trad, char* token, int coluna)
 {
     for(int i = 0; i < trad[coluna]->nvalores; i++)
     {
-        if(strncmp(trad[coluna]->refs[i], token, sizeof(token)) == 0)
+        if(strcmp(trad[coluna]->refs[i]) == 0)
         {
             return i;
         }
@@ -39,18 +40,40 @@ int tradutor(tabela** trad, char* token, int coluna)
     return -1;
 }
 
-//calculo da entropia d
-/*double entropia(double total, double amostra)
+double entropia(int* cont, int total, int classes)
 {
-    return log10(amostra/total)/log10(2) - entropia(next, indice + 1);
-}*/
+    double entropia = 0.0;
+
+    for(int i = 0; i < classes; i++)
+    {
+        if(cont[classe] > 0)
+        {
+            double atual = (double) cont[classe] / (double) total;
+    
+            entropia -= atual * log2(atual);
+        }
+    }
+
+    return h;
+}
+
+void contar_classes(int** matriz, int* linhas, int total, int classes, int* cont)
+{
+    memset(cont, 0, classes * sizeof(int));
+    for(int i = 0; i < total; i++)
+    {
+        cont[matriz[linha[i]][0]]++;   
+    }
+}
+
+
 
 void setup(tabela** t, char* token, int ind)
 {  
     if(t[ind] == NULL)
     {
         t[ind] = malloc(sizeof(tabela));
-        strcpy(token, t[ind]->name);
+        t[ind]->name = strdup(token)
         t[ind]->refs = NULL;
         t[ind]->nvalores = 0;
         t[ind]->maximo = 0;
@@ -81,7 +104,7 @@ void setup(tabela** t, char* token, int ind)
                 return;
             }
         }
-        strcpy(token, t[ind]->refs[i]);
+        t[ind]->refs[t[ind]->nvalores] = strdup(token)
         t[ind]->nvalores++;
     }
 }
