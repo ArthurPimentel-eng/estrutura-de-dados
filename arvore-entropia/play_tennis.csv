@@ -1,0 +1,15 @@
+Jogar,Tempo,Temperatura,Umidade,Vento
+Nao,Sol,Quente,Alta,Fraco
+Nao,Sol,Quente,Alta,Forte
+Sim,Nublado,Quente,Alta,Fraco
+Sim,Chuva,Media,Alta,Fraco
+Sim,Chuva,Fria,Normal,Fraco
+Nao,Chuva,Fria,Normal,Forte
+Sim,Nublado,Fria,Normal,Forte
+Nao,Sol,Media,Alta,Fraco
+Sim,Sol,Fria,Normal,Fraco
+Sim,Chuva,Media,Normal,Fraco
+Sim,Sol,Media,Normal,Forte
+Sim,Nublado,Media,Alta,Forte
+Sim,Nublado,Quente,Normal,Fraco
+Nao,Chuva,Media,Alta,Forte

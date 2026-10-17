@@ -10,7 +10,7 @@ typedef struct no{
 }No;
 
 typedef struct lista{
-    void* tamanho;
+    void *tamanho;
     No *inicio;
 }Lista;
 
