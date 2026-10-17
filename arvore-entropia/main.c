@@ -31,20 +31,72 @@ no* nova_folha(int classe)
     folha->classe = classe;
     folha->nfilhos = 0;
     folha->filhos = NULL;
-
+    
     return folha;
 }
 
 no* novo_no(int classe, int nfilhos, int atributo)
 {
     no* interno = malloc(sizeof(no));
-
+    
     interno->atributo = atributo;
     interno->classe = classe;
     interno->nfilhos = nfilhos;
     interno->filhos = calloc(nfilhos, sizeof(no*));
-
+    
     return interno;
+}
+
+void setup(tabela** t, char* token, int ind)
+{  
+    if(t[ind] == NULL)
+    {
+        t[ind] = malloc(sizeof(tabela));
+        t[ind]->name = strdup(token);
+        t[ind]->refs = NULL;
+        t[ind]->nvalores = 0;
+        t[ind]->maximo = 0;
+    }
+    else
+    {
+        if(t[ind]->nvalores == t[ind]->maximo)
+        {
+            int antigo = t[ind]->maximo;
+            int novo = antigo ? antigo * 2 : 4;
+
+            char** tmp = realloc(t[ind]->refs, novo * sizeof(char*));
+            if(tmp == NULL)
+            {
+                perror("realloc");
+                exit(1);
+            }
+            t[ind]->refs = tmp;
+            t[ind]->maximo = novo;
+
+            memset(t[ind]->refs + antigo, 0, (novo - antigo) * sizeof(char*));
+        }
+
+        for(int i = 0; i < t[ind]->nvalores; i++)
+        {                           
+            if(strcmp(token, t[ind]->refs[i]) == 0)
+            {
+                return;
+            }
+        }
+        t[ind]->refs[t[ind]->nvalores] = strdup(token);
+        t[ind]->nvalores++;
+    }
+}
+
+int previsao(no* raiz, int* vetor)
+{
+    no* atual = raiz;
+    while(atual->atributo != -1)
+    {
+        atual = atual->filhos[vetor[atual->atributo]];
+    }
+
+    return atual->classe;
 }
 
 //traduçao da tabela de afirmaçoes em inteiros simples de computar as equaçoes de ganho de informação
@@ -84,13 +136,13 @@ int** particionar(int** matriz, int* linhas, int sublinhas, int coluna, int natr
     int** ramos = malloc(natributos * sizeof(int*));
     for(int atr_atual = 0; atr_atual < natributos; atr_atual++)
     {
+        tamanhos[atr_atual] = 0;
         ramos[atr_atual] = calloc(sublinhas, sizeof(int));
         for(int posicao = 0; posicao < sublinhas; posicao++)
         {
             if(matriz[linhas[posicao]][coluna] == atr_atual)
             {
-                ramos[atr_atual][tamanhos[atr_atual]] = linhas[posicao];
-                tamanhos[atr_atual]++; 
+                ramos[atr_atual][tamanhos[atr_atual]++] = linhas[posicao];
             }
         }
     }
@@ -98,12 +150,42 @@ int** particionar(int** matriz, int* linhas, int sublinhas, int coluna, int natr
     return ramos;
 }
 
-void contar_classes(int** matriz, int* linhas, int total, int classes, int* cont)
+int majoritaria(int** matriz,  int* linhas, int tamanho, int num_classes)
 {
-    memset(cont, 0, classes * sizeof(int));
-    for(int i = 0; i < total; i++)
+    int* contagem = calloc(num_classes, sizeof(int));
+    
+    int maior = 0;
+    int ind_maior = -1;
+
+    for(int i = 0; i < tamanho; i++)
     {
-        cont[matriz[linhas[i]][0]]++;   
+        int classe = matriz[linhas[i]][0];
+        contagem[classe]++;   
+        if(contagem[classe] > maior)
+        {
+            maior = contagem[classe];
+            ind_maior = classe;
+        }
+    }
+
+    free(contagem);
+    return ind_maior;
+}
+
+void imprimir_arvore(no* atual, tabela** trad, int nivel)
+{
+    if(atual->atributo == -1)
+    {
+        printf("%*s-> %s\n", 4 * nivel, "",trad[0]->refs[atual->classe]);
+    }
+
+    else
+    {
+        for(int i = 0; i < atual->nfilhos; i++)
+        {
+            printf("%*s[%s = %s]\n", 4 * nivel, "", trad[atual->atributo]->name, trad[atual->atributo]->refs[i]);
+            imprimir_arvore(atual->filhos[i], trad, nivel + 1);
+        }
     }
 }
 
@@ -162,8 +244,6 @@ int melhor_atributo(int** matriz, tabela** trad, int* linhas, int* atributos_usa
         if(!atributos_usado[coluna])
         {
             double temp = ganho_informacao(matriz, trad, linhas, coluna, sublinhas);
-            printf("%.3lf\n", temp);
-
             if(temp > melhor_ganho)
             {
                 melhor_ganho = temp;
@@ -173,52 +253,67 @@ int melhor_atributo(int** matriz, tabela** trad, int* linhas, int* atributos_usa
     }
 
     *melhor_ig = melhor_ganho;
-    printf("%.3lf %d\n", *melhor_ig, melhor_indice);
     return melhor_indice;
 }
 
-
-
-void setup(tabela** t, char* token, int ind)
-{  
-    if(t[ind] == NULL)
+int eh_puro(int** matriz, int* linhas, int sublinhas)
+{
+    int counter;
+    for(int i = 0; i < sublinhas; i++)
     {
-        t[ind] = malloc(sizeof(tabela));
-        t[ind]->name = strdup(token);
-        t[ind]->refs = NULL;
-        t[ind]->nvalores = 0;
-        t[ind]->maximo = 0;
+        int valor = matriz[linhas[i]][0];
+        if(i == 0) counter = valor;
+        else if(valor != counter) return 0;
     }
-    else
-    {
-        if(t[ind]->nvalores == t[ind]->maximo)
-        {
-            int antigo = t[ind]->maximo;
-            int novo = antigo ? antigo * 2 : 4;
 
-            char** tmp = realloc(t[ind]->refs, novo * sizeof(char*));
-            if(tmp == NULL)
-            {
-                perror("realloc");
-                exit(1);
-            }
-            t[ind]->refs = tmp;
-            t[ind]->maximo = novo;
-
-            memset(t[ind]->refs + antigo, 0, (novo - antigo) * sizeof(char*));
-        }
-
-        for(int i = 0; i < t[ind]->nvalores; i++)
-        {                           
-            if(strcmp(token, t[ind]->refs[i]) == 0)
-            {
-                return;
-            }
-        }
-        t[ind]->refs[t[ind]->nvalores] = strdup(token);
-        t[ind]->nvalores++;
-    }
+    return 1;
 }
+no* montar_arvore(int** matriz, tabela** trad, int* atributos_usados, int* linhas, int sublinhas, int ncolunas, int profundidade)
+{
+    int classe = majoritaria(matriz, linhas, sublinhas, trad[0]->nvalores);
+    if(eh_puro(matriz, linhas, sublinhas) || profundidade >= MAX_HEIGHT)
+    {
+        return nova_folha(classe);
+    }
+
+    double melhor_ig;
+    int melhor_indice = melhor_atributo(matriz, trad, linhas, atributos_usados, sublinhas, ncolunas, &melhor_ig);
+
+    if(melhor_indice == -1)
+    {
+        return nova_folha(classe);
+    }
+
+    int nvalores = trad[melhor_indice]->nvalores;
+    int* tamanhos = calloc(nvalores, sizeof(int));
+    int** subconjuntos = particionar(matriz, linhas, sublinhas, melhor_indice, nvalores, tamanhos);
+
+    no* atual = novo_no(classe, nvalores, melhor_indice);
+
+    atributos_usados[melhor_indice] = 1;
+
+    for(int valor = 0; valor < nvalores; valor++)
+    {
+        if(tamanhos[valor] == 0)
+        {
+            atual->filhos[valor] = nova_folha(classe);
+        }
+        else atual->filhos[valor] = montar_arvore(matriz, trad, atributos_usados, subconjuntos[valor], tamanhos[valor], ncolunas, profundidade + 1);
+    }
+        
+    atributos_usados[melhor_indice] = 0;
+
+    for(int i = 0; i < nvalores; i++)
+    {
+        free(subconjuntos[i]);
+    }
+    free(subconjuntos);
+    free(tamanhos);
+
+    return atual;
+}
+
+
 
 int main(int argc, char* argv[])
 {
@@ -319,6 +414,8 @@ int main(int argc, char* argv[])
             coluna++;
         }
     }
+    
+    fclose(f);
 
     int* linhas = malloc(nlinhas * sizeof(int));
     
@@ -327,30 +424,30 @@ int main(int argc, char* argv[])
         linhas[i] = i;
     }
 
-    int* atributo_usado = calloc(ncolunas, sizeof(int));
+    int* atributos_usados = calloc(ncolunas, sizeof(int));
 
-    double melhor_ig;
-    int melhor_indice = melhor_atributo(matriz, trad, linhas, atributo_usado, nlinhas, ncolunas, &melhor_ig);
+    no* raiz = montar_arvore(matriz, trad, atributos_usados, linhas, nlinhas, ncolunas, 0);
 
-    int* tamanhos = calloc(trad[melhor_indice]->nvalores, sizeof(int));
+    imprimir_arvore(raiz, trad, 0);
 
-    int* linhas_base = malloc(nlinhas * sizeof(int));
-    for(int i = 0; i < nlinhas; i++)
-    {
-        linhas_base[i] = i;
-    }
-    int** linhas_ramos = particionar(matriz, linhas_base, nlinhas, melhor_indice, trad[melhor_indice]->nvalores, tamanhos);
+    /*int choice;
+    do{
+        printf("Gostaria de prever alguma possibilidade? ");
+        scanf("%d", &choice);
 
-    for(int i = 0; i < trad[melhor_indice]->nvalores; i++)
-    {
-        for(int j = 0; j < tamanhos[i]; j++)
+        if(choice)
         {
-            printf("%d ", linhas_ramos[i][j]);
+            int income[ncolunas];
+            printf("Insira o vetor já traduzido: ");
+            for(int i = 0; i < ncolunas; i++)
+            { 
+                scanf("%d", income[i]);
+            }
+            int classe = previsao(raiz, income);
+            printf("%s\n", trad[0]->refs[classe]);
+        
         }
-        puts("");
-    }
-
-    fclose(f);
+    }while(choice);*/
 
     return 0;
 }
