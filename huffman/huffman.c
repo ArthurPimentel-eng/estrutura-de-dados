@@ -327,10 +327,10 @@ int compactar(char** dicionario, FILE *entrada, FILE *saida){
 void montarCabecalho(unsigned int tamanhoArvore, int lixo, FILE *saida){
     unsigned char cabecalho[2];
 
-    cabecalho[0] = (lixo << 5) | (tamanhoArvore >> 8); // n entendi
-    cabecalho[1] = tamanhoArvore & 255; // n entendi
+    cabecalho[0] = (lixo << 5) | (tamanhoArvore >> 8);
+    cabecalho[1] = tamanhoArvore & 255; 
 
-    fseek(saida, 0, SEEK_SET); //mover o ponteiro pro inicio do arquivo pra reescrever o lixo e o tamanho da arvore
+    fseek(saida, 0, SEEK_SET); 
 
     fputc(cabecalho[0], saida);
     fputc(cabecalho[1], saida);
@@ -384,7 +384,6 @@ No* refazerArvore(FILE* arquivo, unsigned int *tamanhoArvore){
 /**
  * Cria um novo arquivo descompactado
  */
-//ESTUDARRR
 void descompactar(FILE *entrada, FILE *saida, No *raiz, int lixo){
     No *atual = raiz;
     int byteAtual = fgetc(entrada);
@@ -403,7 +402,7 @@ void descompactar(FILE *entrada, FILE *saida, No *raiz, int lixo){
     
 
         for(int i=7; i >= (8 - limiteBitsLidos); i--){
-            int bit = (byteAtual >> i) & 1; //estudar mais
+            int bit = (byteAtual >> i) & 1; 
 
             if(bit == 0){
                 atual = atual->esq;
@@ -413,7 +412,7 @@ void descompactar(FILE *entrada, FILE *saida, No *raiz, int lixo){
 
             if(atual->esq == NULL && atual->dir == NULL){
                 fputc(*(int*)atual->caracter, saida);
-                atual = raiz;//reseta p achar novo caracter
+                atual = raiz;
             }
         }
         
@@ -523,8 +522,8 @@ int main(){
         cabecalho[0] = fgetc(arquivoHuff);
         cabecalho[1] = fgetc(arquivoHuff);
 
-        int lixoExtraido = cabecalho[0] >> 5; //estudar
-        unsigned int tamanhoArvoreExtraida = ((cabecalho[0] & 7) << 8) | cabecalho[1]; //estudar
+        int lixoExtraido = cabecalho[0] >> 5; 
+        unsigned int tamanhoArvoreExtraida = ((cabecalho[0] & 31) << 8) | cabecalho[1]; 
 
         No *arvoreReconstruida = refazerArvore(arquivoHuff, &tamanhoArvoreExtraida);
         descompactar(arquivoHuff, arquivoDescompactado, arvoreReconstruida, lixoExtraido);
