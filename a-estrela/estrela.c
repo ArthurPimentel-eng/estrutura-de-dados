@@ -54,9 +54,15 @@ aberto[ini] = 1;
 
 for(;;) {
 int atual = -1;
-    for(int i = 0; i < n; i++)
-        if(aberto[i] && (atual == -1 || g[i] + h[i] < g[atual] + h[atual]))
+int f_atual = 0;
+for(int i = 0; i < n; i++) {
+    if(!aberto[i]) continue;
+    int f = g[i] + h[i];
+    if(atual == -1 || f < f_atual) {
         atual = i;
+        f_atual = f;
+    }
+}
 
     if(atual == -1) break;
     if(atual == fim) break;
