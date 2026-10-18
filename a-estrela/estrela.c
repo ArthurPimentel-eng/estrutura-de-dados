@@ -31,7 +31,7 @@ for(int i = 0; i < n; i++)        //vai ler os valores. Ex: h[0] = 30, h[1] = 26
 
 for(int k = 0; k < m; k++) {
 int o, d, c;
-    if(scanf("%d %d %d", &o, &d, &c) != 3 || o < 0 || o >= n || d >= n || c <= 0)
+    if(scanf("%d %d %d", &o, &d, &c) != 3 || o < 0 || o >= n || d >= n || d < 0 || c <= 0)
         return 1;
     custo[o][d] = c;
     if(dir != 1)
@@ -90,5 +90,5 @@ for(int i = tam -1; i >= 0; i--)
     printf("%c ", 'A' + caminho[i]);
     printf("\nCusto: %d\n", g[fim]);
 
-
+    return 0;
 }
