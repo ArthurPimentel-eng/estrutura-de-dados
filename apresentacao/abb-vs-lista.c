@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#define MAX_ALEATORIO 100000 
+#define MAX_ALEATORIO 1000000
 #define ARQUIVO_BENCHMARK "resultados.csv"
 
 typedef struct no{
@@ -153,14 +153,23 @@ void executarbenchmark(FILE *saida, int tamanhomax, int passo, int repeticoes, i
             gerarAleatorios(&lista, &raiz, tamanho);
 
             totallista = 0;
-            totalarv= 0;
+            totalarv = 0;
 
-            for(busca = 0; busca < bucas; busca++)
+            for(busca = 0; busca < buscas; busca++)
             {
                 alvo = rand() % MAX_ALEATORIO;
                 passagenarv = 0;
-                buscar(&lista )
+                buscar(&lista, alvo, &passagenslista);
+                buscararv(raiz, alvo, &passagensarv);
+                totallista += passagenslista;
+                totalarv += totalarv;
             }
+
+            fprintf(saida, "lista,%d,%d,%.2f\n", tamanho, repeticao, (double) totallista / buscas);
+            fprintf(saida, "arvore,%d,%d,%.2f\n", tamanho, repeticao, (double) totalarv / buscas);
+            
+            liberarlista(lista);
+            liberararvore(raiz);
         }
     }
 }
@@ -177,7 +186,7 @@ int main () {
     srand(time(NULL));
 
     do{
-        printf("0 - sair\n1 - inserirI\n2 - inserirF\n3 - imprimir lista\n4 - buscar na lista\n5 - gerar numeros aleatorios e inserir\n6 - inserir na arvore\n7 - imprimir arvore\n8 - buscar na arvore\n");
+        printf("0 - sair\n1 - inserirI\n2 - inserirF\n3 - imprimir lista\n4 - buscar na lista\n5 - gerar numeros aleatorios e inserir\n6 - inserir na arvore\n7 - imprimir arvore\n8 - buscar na arvore\n9 - Arquivo da Plotagem\n");
         scanf("%d", &opcao);
         
         switch(opcao) {
@@ -219,29 +228,37 @@ for(; scanf("%d", &valor) == 1 && valor != -1; )
 inserirarv(&raiz, valor);
 break;
 case 7:
-printf("\nArvore:");
-imprimirarv(raiz);
-printf("\n\n");
-break;
+    printf("\nArvore:");
+    imprimirarv(raiz);
+    printf("\n\n");
+    break;
 case 8:
-printf("\nDigite o valor a ser buscado: ");
-scanf("%d", &valor);
-passagensA = 0;
-busca = buscararv(raiz, valor, &passagensA);
-if(busca)
-printf("\nValor encontrado: %d\nPassagens até encontrar: %d\n", busca->valor, passagensA);
-else
-printf("Valor nao encontrado\nPassagen feitas: %d\n", passagensA);
-break;
+    printf("\nDigite o valor a ser buscado: ");
+    scanf("%d", &valor);
+    passagensA = 0;
+    busca = buscararv(raiz, valor, &passagensA);
+    if(busca)
+    printf("\nValor encontrado: %d\nPassagens até encontrar: %d\n", busca->valor, passagensA);
+    else
+    printf("Valor nao encontrado\nPassagen feitas: %d\n", passagensA);
+    break;
 
 case 9:
-printf("Insira o Tamanho Maximo das Estruturas, Passos, Repeticoes e buscas: ")
-if(scanf("%d %d %d %d", &tamanhomax, &passo, &repeticoes, &buscas) == 4)
-{
-
-}
-executarbenchmark(tamanhomax, passo, repeticoes, buscas);
-return 0;
+    printf("Insira o Tamanho Maximo das Estruturas, Passos, Repeticoes e buscas: ")
+    if(scanf("%d %d %d %d", &tamanhomax, &passo, &repeticoes, &buscas) == 4 && tamanhomax > 0 && passo > 0 && repeticoes > 0 && buscas > 0)
+    {
+        arquivo = fopen(ARQUIVO_BENCHMARK, "w");
+            if(arquivo) {
+                executarbenchmark(arquivo, tamanhomax, passo, repeticoes, buscas);
+                fclose(arquivo);
+                printf("\nBenchmark salvo em %s\n\n", ARQUIVO_BENCHMARK);
+            }
+        else
+           printf("\nNao foi possivel criar o arquivo\n\n");
+    }
+    else
+        printf("\nValores invalidos\n\n");
+    break;
 
 default:
 if(opcao != 0) {
