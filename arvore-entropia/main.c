@@ -9,8 +9,8 @@
 //Struct que representa 
 typedef struct
 {
-    char* name;
-    char** refs;
+    char* name; //STRING
+    char** refs; //Array de Strings, SOL = 0 CHUVA = 1 NUBLADO = 2
     int nvalores;
     int maximo;
 }tabela;
@@ -62,7 +62,9 @@ void setup(tabela** t, char* token, int ind)
         if(t[ind]->nvalores == t[ind]->maximo)
         {
             int antigo = t[ind]->maximo;
-            int novo = antigo ? antigo * 2 : 4;
+            int novo 
+            if(antigo) novo = antigo + 2;
+            else novo = 4;
 
             char** tmp = realloc(t[ind]->refs, novo * sizeof(char*));
             if(tmp == NULL)
@@ -253,7 +255,7 @@ int melhor_atributo(int** matriz, tabela** trad, int* linhas, int* atributos_usa
     }
 
     *melhor_ig = melhor_ganho;
-    return melhor_indice;
+    return melhor_indice;int antigo = tamanho;
 }
 
 int eh_puro(int** matriz, int* linhas, int sublinhas)
@@ -348,15 +350,14 @@ int main(int argc, char* argv[])
         if(ncolunas == tamanho)
         {
             int antigo = tamanho;
-            tamanho = tamanho ? tamanho + 2 : 4;
-
+            if(tamanho) tamanho += 2;
+            else tamanho = 4;
             tabela** novo = realloc(trad, tamanho * sizeof(tabela*));
             if(novo == NULL)
             {
                 perror("realloc");
                 return 1;
             }
-
             memset(novo + antigo, 0, (tamanho - antigo) * sizeof(tabela*));
             trad = novo;
             
@@ -367,18 +368,18 @@ int main(int argc, char* argv[])
     }
 
     int nlinhas = 0;
-    int j = 0;
+    int coluna_atual = 0;
 
     while(fgets(line, sizeof(line), f) != NULL)
     {
         line[strcspn(line, "\r\n")] = '\0';
         for(token = strtok(line, ","); token != NULL; token = strtok(NULL, ","))
         {
-            setup(trad, token, j);
-            j++;
+            setup(trad, token, coluna_atual);
+            coluna_atual++;
         }
         
-        j = 0;
+        coluna_atual = 0;
         nlinhas++;
     }
 
