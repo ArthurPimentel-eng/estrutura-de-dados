@@ -1,12 +1,12 @@
 #include <stdio.h>
 #define maxn 100
-#define INF 1000000000
+#define INF 1000000000 //custo de um no ainda nao alcançado
 
-int custo[maxn][maxn];
-int h[maxn]; //heuristica de cada no
 
 int main () {
-    int n, m, dir, ini, fim; //n é o numero de nos, m é o numero de arestas
+    int custo[maxn][maxn] = {0}; // O {0} serve para nao correr risco do custo enxergar um lixo de memoria como se fosse uma aresta que não existe
+    int h[maxn] = {0};
+    int n, m, dir, ini, fim; //n é o numero de nos, m é o numero de arestas, dir indica se o grafo é direcionado
 
     printf("Digite o numero de nos:\n");
     printf("Digite os valores heuristicos:\n");
@@ -14,11 +14,12 @@ int main () {
     printf("Digite o numero de arestas:\n");
     printf("Digite as origens, os destinos e os custos:\n");
     printf("Digite o inicio e o fim:\n");
+    
     if(scanf("%d", &n) !=1 || n < 1 || n > maxn)
         return 1;
 
 
-for(int i = 0; i < n; i++)        //vai ler os valores. Ex: h[0] = 30, h[1] = 26...
+for(int i = 0; i < n; i++)        //vai ler os valores heurísticos. Ex: h[0] = 30, h[1] = 26...
     if(scanf("%d", &h[i]) != 1)
         return 1;
 
@@ -28,20 +29,21 @@ for(int i = 0; i < n; i++)        //vai ler os valores. Ex: h[0] = 30, h[1] = 26
     if(scanf("%d", &m) != 1 || m < 0)
         return 1;
 
-
+//le a origem , o destino e o custo de um no especifico ate outro (c = custo)
 for(int k = 0; k < m; k++) {
-int o, d, c;
-    if(scanf("%d %d %d", &o, &d, &c) != 3 || o < 0 || o >= n || d >= n || d < 0 || c <= 0)
+int origem, destino, c;
+    if(scanf("%d %d %d", &origem, &destino, &c) != 3 || origem < 0 || origem >= n || destino >= n || destino < 0 || c <= 0)
         return 1;
-    custo[o][d] = c;
+    custo[origem][destino] = c;
     if(dir != 1)
-        custo[d][o] = c;
+        custo[destino][origem] = c;
 }
 
-
+//le o ponto de partida (inicio) e o objetivo (fim)
     if(scanf("%d %d", &ini, &fim) != 2 || ini < 0 || ini >= n || fim < 0 || fim >= n)
         return 1;
 
+//preparar os nos, ou "zera"
 int g[maxn], pai[maxn], aberto[maxn];
 for(int i = 0; i < n; i++) {
     g[i] = INF;
@@ -52,6 +54,7 @@ for(int i = 0; i < n; i++) {
 g[ini] = 0;
 aberto[ini] = 1;
 
+//escolher dentro dos nos abertos o melhor
 for(;;) {
 int atual = -1;
 int f_atual = 0;
@@ -69,32 +72,36 @@ for(int i = 0; i < n; i++) {
 
     aberto[atual] = 0;
 
-    for(int v = 0; v < n; v++) {
-        if(custo[atual][v] == 0) continue;
-int novo = g[atual] + custo[atual][v];
-        if(novo < g[v]) {
-            g[v] = novo;
-            pai[v] = atual;
-            aberto[v] = 1;
+//testa os caminhos do no escolhido ate os vizinhos e atualiza o custo g se achar um caminho melhor
+    for(int vizinho = 0; vizinho < n; vizinho++) {
+        if(custo[atual][vizinho] == 0) continue;
+int novo = g[atual] + custo[atual][vizinho];
+        if(novo < g[vizinho]) {
+            g[vizinho] = novo;
+            pai[vizinho] = atual;
+            aberto[vizinho] = 1;
 
         }
     }
 
 }
 
+//se g[fim] ainda é INF nao chegamos no nó
     if(g[fim] == INF) {
-        printf("Nao existe caminho de %d ate %d\n", ini, fim);
+        printf("Nao existe caminho de %c ate %c\n", 'A' + ini, 'A' + fim);
         return 0;
     }
 
+//reconstroi o caminho de tras pra frente e imprime
 int caminho[maxn], tam = 0;
 for(int v = fim; v != -1; v = pai[v])
     caminho[tam++] = v;
 
+//coloca o caminho na ordem certa de novo e imprime
     printf("Caminho: ");
 for(int i = tam -1; i >= 0; i--)
     printf("%c ", 'A' + caminho[i]);
-    printf("\nCusto: %d\n", g[fim]);
+    printf("\nCusto: %d\n", g[fim]); //imprime o custo tambem
 
     return 0;
 }
