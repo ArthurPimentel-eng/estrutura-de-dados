@@ -2,10 +2,10 @@
 #define maxn 100
 #define INF 1000000000 //custo de um no ainda nao alcançado
 
-int custo[maxn][maxn]; //custo da aresta x ate y
-int h[maxn]; //heuristica de cada no
 
 int main () {
+    int custo[maxn][maxn] = {0}; // O {0} serve para nao correr risco do custo enxergar um lixo de memoria como se fosse uma aresta que não existe
+    int h[maxn] = {0};
     int n, m, dir, ini, fim; //n é o numero de nos, m é o numero de arestas, dir indica se o grafo é direcionado
 
     printf("Digite o numero de nos:\n");
@@ -14,6 +14,7 @@ int main () {
     printf("Digite o numero de arestas:\n");
     printf("Digite as origens, os destinos e os custos:\n");
     printf("Digite o inicio e o fim:\n");
+    
     if(scanf("%d", &n) !=1 || n < 1 || n > maxn)
         return 1;
 
@@ -87,7 +88,7 @@ int novo = g[atual] + custo[atual][vizinho];
 
 //se g[fim] ainda é INF nao chegamos no nó
     if(g[fim] == INF) {
-        printf("Nao existe caminho de %d ate %d\n", ini, fim);
+        printf("Nao existe caminho de %c ate %c\n", 'A' + ini, 'A' + fim);
         return 0;
     }
 
