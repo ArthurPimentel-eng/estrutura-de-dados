@@ -120,11 +120,15 @@ void gerarAleatorios(No **lista, Noarv **raiz, int qtd) {
     }
 }
 
-void liberarlista(Neo* lista)
+void liberarlista(No* lista)
 {
-    if(lista == NULL) return;
-    liberarlista(lista->proximo);
-    free(lista);
+    No *proximo;
+    while(lista)
+    {
+        proximo = lista->proximo;
+        free(lista);
+        lista = proximo;
+    }
 }
 
 void liberararvore(Noarv* raiz)
@@ -135,39 +139,64 @@ void liberararvore(Noarv* raiz)
     free(raiz);
 }
 
-void executarbenchmark(FILE *saida, int tamanhomax, int passo, int repeticoes, int buscas)
+void gerarpermutacao(No **lista, Noarv **raiz, int quantidade) {
+    int *valores = malloc(quantidade * sizeof(int));
+    int indice, sorteado, troca;
+
+    for(indice = 0; indice < quantidade; indice++)
+        valores[indice] = indice;
+
+    for(indice = quantidade - 1; indice > 0; indice--) {
+        sorteado = rand() % (indice + 1);
+        troca = valores[indice];
+        valores[indice] = valores[sorteado];
+        valores[sorteado] = troca;
+    }
+
+    for(indice = 0; indice < quantidade; indice++) {
+        inseririnicio(lista, valores[indice]);
+        inserirarv(raiz, valores[indice]);
+    }
+
+    free(valores);
+}
+
+void executarbenchmark(FILE *saida, int tamanhomin, int tamanhomax, int repeticoes, int buscas)
 {
-    int tamanho, repeticao, busca, alvo, passagenslista, passagensarv;
+    int tamanho, repeticao, busca, chave, alvo, passagenslista, passagensarv;
     long totallista, totalarv;
     No* lista;
     Noarv* raiz;
 
     fprintf(saida, "estrutura,tamanho,repeticao,media_passagens\n");
 
-    for(tamanho = passo; tamanho <= tamanhomax; tamanho += passo)
+    for(tamanho = tamanhomin; tamanho <= tamanhomax; tamanho *= 2)
     {
         for(repeticao = 1; repeticao <= repeticoes; repeticao++)
         {
             lista = NULL;
             raiz = NULL;
-            gerarAleatorios(&lista, &raiz, tamanho);
+            gerarpermutacao(&lista, &raiz, tamanho);
 
             totallista = 0;
-            totalarv = 0;
-
             for(busca = 0; busca < buscas; busca++)
             {
-                alvo = rand() % MAX_ALEATORIO;
-                passagenarv = 0;
+                alvo = rand() % tamanho;
                 buscar(&lista, alvo, &passagenslista);
-                buscararv(raiz, alvo, &passagensarv);
                 totallista += passagenslista;
-                totalarv += totalarv;
             }
 
-            fprintf(saida, "lista,%d,%d,%.2f\n", tamanho, repeticao, (double) totallista / buscas);
-            fprintf(saida, "arvore,%d,%d,%.2f\n", tamanho, repeticao, (double) totalarv / buscas);
-            
+            totalarv = 0;
+            for(chave = 0; chave < tamanho; chave++)
+            {
+                passagensarv = 0;
+                buscararv(raiz, chave, &passagensarv);
+                totalarv += passagensarv;
+            }
+
+            fprintf(saida, "lista,%d,%d,%.4f\n", tamanho, repeticao, (double) totallista / buscas);
+            fprintf(saida, "arvore,%d,%d,%.4f\n", tamanho, repeticao, (double) totalarv / tamanho);
+
             liberarlista(lista);
             liberararvore(raiz);
         }
@@ -179,7 +208,7 @@ void executarbenchmark(FILE *saida, int tamanhomax, int passo, int repeticoes, i
 int main () {
     
     int opcao, valor, anterior, passagens, quantidade, passagensA;
-    int tamanhomax, passo ,repeticoes, buscas;
+    int tamanhomin, tamanhomax, repeticoes, buscas;
     FILE* saida;
     No *lista = NULL, *elemento;
     Noarv *busca, *raiz = NULL;
@@ -244,17 +273,19 @@ case 8:
     break;
 
 case 9:
-    printf("Insira o Tamanho Maximo das Estruturas, Passos, Repeticoes e buscas: ")
-    if(scanf("%d %d %d %d", &tamanhomax, &passo, &repeticoes, &buscas) == 4 && tamanhomax > 0 && passo > 0 && repeticoes > 0 && buscas > 0)
+    printf("Digite tamanho minimo, tamanho maximo, repeticoes e buscas: ");
+    if(scanf("%d %d %d %d", &tamanhomin, &tamanhomax, &repeticoes, &buscas) == 4
+    && tamanhomin > 0 && tamanhomax >= tamanhomin && repeticoes > 0 && buscas > 0) {
     {
-        arquivo = fopen(ARQUIVO_BENCHMARK, "w");
-            if(arquivo) {
-                executarbenchmark(arquivo, tamanhomax, passo, repeticoes, buscas);
-                fclose(arquivo);
+        saida = fopen(ARQUIVO_BENCHMARK, "w");
+            if(saida) {
+                executarbenchmark(saida, tamanhomin, tamanhomax, repeticoes, buscas);
+                fclose(saida);
                 printf("\nBenchmark salvo em %s\n\n", ARQUIVO_BENCHMARK);
             }
         else
-           printf("\nNao foi possivel criar o arquivo\n\n");
+           printf("\nNao foi possivel criar o saida\n\n");
+    }
     }
     else
         printf("\nValores invalidos\n\n");
