@@ -441,10 +441,7 @@ int main(){
         preencherLista(tabelaFrequencia, &listaBase);
 
         arvore = gerarArvore(&listaBase);
-        if (arvore != NULL) {
-            printf("\n\tARVORE\n\n");
-            imprimirArvore(arvore, 0);
-        } else {
+        if (arvore == NULL) {
             printf("Erro ao construir a arvore\n");
             fclose(entrada);
             fclose(saida);
@@ -483,7 +480,7 @@ int main(){
     /**
      * DESCOMPACTAR
     */
-    if (decisao == 2 || decisao == 3) {
+    if(decisao == 2 || decisao == 3) {
         char nomeDescompactado[200];
 
         printf("Digite o nome para o arquivo descompactado (com extensao): \n");
