@@ -65,30 +65,16 @@ void preencherLista(unsigned long long tabela[], Lista* lista){
                 novoNo->esq = NULL;
                 novoNo->prox = NULL;
 
-                inserirOrdenadoLista(lista, novoNo);
-            } else{
-                printf("Erro ao alocar memoria em preencher lista!\n");
-            }
+                inserirOrdenadoLista(lista, novoNo);    
+            } 
         }
     }
-}
-
-void imprimirLista(Lista* lista){
-    No *aux = lista->inicio;
-    printf("\n\tLISTA ORDENADA DE NÓS. Tamanho: %llu\n\n", *(unsigned long long*)lista->tamanho);
-
-    while (aux != NULL)
-    {
-        printf("Caracter: %c Frequencia: %llu\n", (unsigned char)*(int*)aux->caracter, *(unsigned long long*)aux->frequencia);
-        aux = aux->prox;
-    }
-    
 }
 
 /**
  * Abrir arquivo e montar a tabela de quantas vezes cada um deles aparece
  */
-unsigned long long montarTabelaFrequencia(FILE *arquivo, unsigned long long tabelaFrequencia[256]){
+void montarTabelaFrequencia(FILE *arquivo, unsigned long long tabelaFrequencia[256]){
 
     if(arquivo == NULL){
         printf("Falha ao abrir arquivo!");
@@ -107,18 +93,6 @@ unsigned long long montarTabelaFrequencia(FILE *arquivo, unsigned long long tabe
         tabelaFrequencia[(unsigned char)byte]++;
         bytesTotais++;
     }
-    return bytesTotais;
-}
-
-void imprimirTabelaFrequencia(unsigned long long tabelaFrequencia[]){
-    printf("\tTABELA DE FREQUENCIA\n\n");
-
-    for(int i= 0; i < 256; i++){
-        if(tabelaFrequencia[i] != 0){
-            printf("Byte %d: %c: %llu vezes\n", i, i, tabelaFrequencia[i]);
-        }    
-    }
-    return;
 }
 
 /**
@@ -178,15 +152,6 @@ No* gerarArvore(Lista* lista){
     return lista->inicio;
 }
 
-void imprimirArvore(No *raiz, unsigned long long tamanho){
-    if(raiz->esq == NULL && raiz->dir == NULL){
-        printf("Folha: %c\tAltura: %llu\n", *(int*)raiz->caracter, tamanho);
-    } else{
-        imprimirArvore(raiz->esq, tamanho+1);
-        imprimirArvore(raiz->dir, tamanho + 1);
-    }
-}
-
 /**
  * Quantidade de arestas da árvore
  */
@@ -197,7 +162,7 @@ int alturaArvore(No* raiz){
         return -1;
     } else{
         esq = alturaArvore(raiz->esq) + 1;
-        dir = alturaArvore(raiz->dir) + 1;
+        dir = alturaArvore(raiz->dir) + 1;    
 
         if(esq > dir){
             return esq;
@@ -210,10 +175,15 @@ int alturaArvore(No* raiz){
 /**
  * Cria uma matriz dinamica para o dicionario
  */
-char** alocarDicionario(int alturaColunas){
+char** alocarDicionario(int alturaColunas){ 
     char **dicionario;
 
-    dicionario = malloc(sizeof(char*)* 256);
+    dicionario = malloc(sizeof(char*)* 256); 
+
+    if(dicionario == NULL){
+        printf("Erro ao alocar dicionario.");
+        exit(1);
+    }
 
     for(int i = 0; i<256; i++){
         dicionario[i]= calloc(alturaColunas + 1, sizeof(char)); //calloc limpa a memoria antes de alocar
@@ -234,7 +204,7 @@ void gerarDicionario(char** dicionario, No* raiz, char *codigo, int colunas){
         int caracter = *(int *)raiz->caracter;
 
         if(colunas == 0){
-            strcpy(dicionario[caracter], "0");
+            strcpy(dicionario[caracter], "0"); 
             return;
         }else{
             codigo[colunas] = '\0'; 
@@ -244,27 +214,16 @@ void gerarDicionario(char** dicionario, No* raiz, char *codigo, int colunas){
     }
 
     codigo[colunas] = '0';
-    gerarDicionario(dicionario, raiz->esq, codigo, colunas + 1);
+    gerarDicionario(dicionario, raiz->esq, codigo, colunas + 1); 
 
     codigo[colunas] = '1';
     gerarDicionario(dicionario, raiz->dir, codigo, colunas + 1);
 }
 
-void imprimirDicionario(char** dicionario){
-    printf("\n\tDICIONARIO HUFFMAN\n\n");
-    for(int i= 0; i<256; i++){
-        if(dicionario[i][0] != '\0'){
-            printf("%3d: %s\n", i, dicionario[i]);
-        }
-    }
-}
-
 /**
  * Salvando a árvore para o cabeçalho
  */
-void salvarPreOrdem(FILE *arquivo, No* raiz, unsigned int *tamanhoBits){
-    int tamanhoArvore = 0;
-
+void salvarPreOrdem(FILE *arquivo, No* raiz, unsigned int *qntBytes){
     if(raiz == NULL){
         return;
     }
@@ -274,16 +233,16 @@ void salvarPreOrdem(FILE *arquivo, No* raiz, unsigned int *tamanhoBits){
 
         if(caracter == '*' || caracter == '\\'){
             fputc('\\', arquivo);
-            (*tamanhoBits)++;
+            (*qntBytes)++;
         }
         fputc(caracter, arquivo);
-        (*tamanhoBits)++;
+        (*qntBytes)++;
     }else{
-        fputc('*', arquivo);
-        (*tamanhoBits)++;
+        fputc('*', arquivo);  
+        (*qntBytes)++;
 
-        salvarPreOrdem(arquivo, raiz->esq, tamanhoBits);
-        salvarPreOrdem(arquivo, raiz->dir, tamanhoBits);
+        salvarPreOrdem(arquivo, raiz->esq, qntBytes);
+        salvarPreOrdem(arquivo, raiz->dir, qntBytes);
     }
     return;
 }
@@ -297,10 +256,10 @@ int compactar(char** dicionario, FILE *entrada, FILE *saida){
     int caracter;
 
     while((caracter = fgetc(entrada)) != EOF){
-        char *codigo = dicionario[(unsigned char)caracter];
+        char *codigo = dicionario[(unsigned char)caracter]; 
 
         for(int i = 0; codigo[i] != '\0'; i++){
-            guardadorDeBits = (guardadorDeBits << 1) | (codigo[i] == '1');
+            guardadorDeBits = (guardadorDeBits << 1) | (codigo[i] == '1'); 
             quantidadeBits++;
 
             if(quantidadeBits == 8){
@@ -314,7 +273,7 @@ int compactar(char** dicionario, FILE *entrada, FILE *saida){
     int lixo = 0;
     if(quantidadeBits > 0){
         lixo = 8 - quantidadeBits;
-        guardadorDeBits = guardadorDeBits << lixo; 
+        guardadorDeBits = guardadorDeBits << lixo;   //REVISAR GARANTE QUE O LIXO ESTEJA NO final DO BYTE   
         fputc(guardadorDeBits, saida);
     }
 
@@ -327,22 +286,13 @@ int compactar(char** dicionario, FILE *entrada, FILE *saida){
 void montarCabecalho(unsigned int tamanhoArvore, int lixo, FILE *saida){
     unsigned char cabecalho[2];
 
-    cabecalho[0] = (lixo << 5) | (tamanhoArvore >> 8);
-    cabecalho[1] = tamanhoArvore & 255; 
+    cabecalho[0] = (lixo << 5) | (tamanhoArvore >> 8);        //REVISAR
+    cabecalho[1] = tamanhoArvore & 255;   //REVISAR 
 
     fseek(saida, 0, SEEK_SET); 
 
     fputc(cabecalho[0], saida);
     fputc(cabecalho[1], saida);
-    return;
-}
-
-void imprimirCodificado(char** dicionario, FILE *entrada){
-    int caracter;
-    printf("\n\tTEXTO CODIFICADO: \n\n");
-    while((caracter = fgetc(entrada)) != EOF){
-        printf("%s", dicionario[(unsigned char)caracter]);
-    }
     return;
 }
 
@@ -360,13 +310,18 @@ No* refazerArvore(FILE* arquivo, unsigned int *tamanhoArvore){
 
     No *novoNo = malloc(sizeof(No));
 
+    if(novoNo == NULL){
+        printf("ERRO AO ALOCAR NÓ EM REFAZER ARVORE.");
+        return NULL;
+    }
+
     novoNo->caracter = malloc(sizeof(int));
     novoNo->dir = NULL;
     novoNo->esq = NULL;
     novoNo->frequencia = NULL;
     novoNo->prox = NULL;
 
-    if(byte == '\\'){
+    if(byte == '\\'){ 
         byte = fgetc(arquivo);
         (*tamanhoArvore)--;
         *(int*)novoNo->caracter = byte;
@@ -393,7 +348,6 @@ void descompactar(FILE *entrada, FILE *saida, No *raiz, int lixo){
 
     while (byteAtual !=EOF){
         
-
         if(byteSeguinte == EOF){
             limiteBitsLidos = 8 - lixo;
         } else{
@@ -421,6 +375,33 @@ void descompactar(FILE *entrada, FILE *saida, No *raiz, int lixo){
     }
     return;
 }
+
+void destruirArvore(No *raiz){
+    if(raiz == NULL){
+        return;
+    }
+
+    destruirArvore(raiz->esq);
+    destruirArvore(raiz->dir);
+
+    free(raiz->caracter);
+    free(raiz->frequencia);
+    free(raiz);
+}
+
+
+void destruirDicionario(char **dicionario){
+    if(dicionario == NULL){
+        return;
+    }
+
+    for(int i = 0; i < 256; i++){
+        free(dicionario[i]);
+    }
+
+    free(dicionario);
+}
+
 
 
 int main(){
@@ -455,11 +436,9 @@ int main(){
         }
 
         montarTabelaFrequencia(entrada, tabelaFrequencia);
-        imprimirTabelaFrequencia(tabelaFrequencia);
 
         iniciarLista(&listaBase);
         preencherLista(tabelaFrequencia, &listaBase);
-        imprimirLista(&listaBase);
 
         arvore = gerarArvore(&listaBase);
         if (arvore != NULL) {
@@ -478,17 +457,13 @@ int main(){
 
         dicionario = alocarDicionario(colunas);
         gerarDicionario(dicionario, arvore, codigo, 0);
-        imprimirDicionario(dicionario);
-
-        rewind(entrada);
-        imprimirCodificado(dicionario, entrada);
 
         rewind(entrada);
         unsigned int tamanhoArvoreEmNos = 0;
 
         // Montagem do cabeçalho
         // Reservar espaço para os dois primeiros bytes (lixo e tamanho da arvore)
-        fputc(0, saida);
+        fputc(0, saida); 
         fputc(0, saida);
 
         salvarPreOrdem(saida, arvore, &tamanhoArvoreEmNos);
@@ -497,6 +472,10 @@ int main(){
 
         fclose(entrada);
         fclose(saida);
+
+        destruirDicionario(dicionario);
+        destruirArvore(arvore);
+        free(listaBase.tamanho);
 
     printf("\n\tARQUIVO COMPACTADO\n\n");
     }
@@ -522,7 +501,7 @@ int main(){
         cabecalho[0] = fgetc(arquivoHuff);
         cabecalho[1] = fgetc(arquivoHuff);
 
-        int lixoExtraido = cabecalho[0] >> 5; 
+        int lixoExtraido = cabecalho[0] >> 5;  
         unsigned int tamanhoArvoreExtraida = ((cabecalho[0] & 31) << 8) | cabecalho[1]; 
 
         No *arvoreReconstruida = refazerArvore(arquivoHuff, &tamanhoArvoreExtraida);
@@ -530,6 +509,8 @@ int main(){
 
         fclose(arquivoHuff);
         fclose(arquivoDescompactado);
+
+        destruirArvore(arvoreReconstruida);
 
     printf("ARQUIVO DESCOMPACTADO!");
     }
