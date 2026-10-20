@@ -10,6 +10,7 @@ typedef struct noLiteral{
 typedef struct listaLiterais{
     int tamanho;
     noLiteral *inicio;
+    noLiteral *fim;
 }listaLiterais;
 
 typedef struct noClausulas{
@@ -20,6 +21,7 @@ typedef struct noClausulas{
 typedef struct listaClausulas{
     int tamanho;
     noClausulas *inicio;
+    noClausulas *fim;
 }listaClausulas;
 
 typedef struct formula {
@@ -29,11 +31,13 @@ typedef struct formula {
 
 void iniciarListaLiterais(listaLiterais *lista){
     lista->inicio = NULL;
+    lista->fim = NULL;
     lista->tamanho = 0;
 }
 
 void iniciarListaClausulas(listaClausulas *lista){
     lista->inicio = NULL;
+    lista->fim = NULL;
     lista->tamanho = 0;
 }
 
@@ -54,15 +58,12 @@ void inserirLiteral(listaLiterais *lista, int valor){
     novo->valor = valor;
     novo->prox = NULL;
 
-    if(lista->inicio == NULL){
+    if (lista->inicio == NULL) {
         lista->inicio = novo;
-    }else{
-        noLiteral *atual = lista->inicio;
-
-        while (atual->prox != NULL){
-            atual = atual->prox;
-        }
-        atual->prox = novo;
+        lista->fim = novo;
+    } else {
+        lista->fim->prox = novo;
+        lista->fim = novo;
     }
     lista->tamanho++;
 }
@@ -79,15 +80,12 @@ void inserirClausula(listaClausulas* lista){
     iniciarListaLiterais(&novo->literais);
     novo->prox = NULL;
 
-    if(lista->inicio == NULL){
+    if (lista->inicio == NULL) {
         lista->inicio = novo;
-    }else {
-        noClausulas *atual = lista->inicio;
-
-        while (atual->prox != NULL){
-            atual = atual->prox;
-        }
-        atual->prox = novo;
+        lista->fim = novo;
+    } else {
+        lista->fim->prox = novo;
+        lista->fim = novo;
     }
     lista->tamanho++;
 }
@@ -96,7 +94,10 @@ void lerClausulas(FILE *arquivo, listaClausulas *clausulas, int qntClausulas){
     int clausulasLidas = 0;
     int valor;
 
-    inserirClausula(clausulas);
+    if(qntClausulas > 0){
+        inserirClausula(clausulas);
+    }
+    
     noClausulas *atualClausula = clausulas->inicio;
     
     while(clausulasLidas < qntClausulas){
@@ -126,7 +127,7 @@ void lerClausulas(FILE *arquivo, listaClausulas *clausulas, int qntClausulas){
     }
 }
 
-void lerArquivo(FILE * arquivo, formula *formula){
+void lerArquivo(FILE * arquivo, formula *f){
     char caracter;
     char formato[4];
     int qntClausulas;
@@ -136,31 +137,13 @@ void lerArquivo(FILE * arquivo, formula *formula){
             fscanf(arquivo, "%*[^\n]");
         } else if (caracter == 'p'){
             fscanf(arquivo, "%3s", formato);
-            fscanf(arquivo, "%d %d", &formula->qntVariaveis, &qntClausulas);
+            fscanf(arquivo, "%d %d", &f->qntVariaveis, &qntClausulas);
 
-            iniciarListaClausulas(&formula->clausulas);
+            iniciarListaClausulas(&f->clausulas);
 
-            lerClausulas(arquivo, &formula->clausulas, qntClausulas);
+            lerClausulas(arquivo, &f->clausulas, qntClausulas);
             break;
         }
-    }
-}
-
-void imprimirFormula(formula* f){
-    printf("Variaveis: %d\n", f->qntVariaveis);
-    printf("Clausulas: %d\n", f->clausulas.tamanho);
-
-    noClausulas *atualClausula = f->clausulas.inicio;
-
-    while(atualClausula != NULL){
-        noLiteral *atualLiteral = atualClausula->literais.inicio;
-
-        while(atualLiteral != NULL){
-            printf("%d ", atualLiteral->valor);
-            atualLiteral = atualLiteral->prox;
-        }
-        printf("0\n");
-        atualClausula = atualClausula->prox;
     }
 }
 
@@ -220,7 +203,39 @@ int resolverSat(formula *f, int atribuicao[], int variavelAtual){
         return 0;
         
     }
-    
+
+void destruirListaLiterais(listaLiterais *lista) {
+    noLiteral *atual = lista->inicio;
+
+    while (atual != NULL) {
+        noLiteral *proximo = atual->prox;
+        free(atual);
+        atual = proximo;
+    }
+
+    lista->inicio = NULL;
+    lista->fim = NULL;
+    lista->tamanho = 0;
+}
+
+void destruirFormula(formula *f) {
+    noClausulas *atual = f->clausulas.inicio;
+
+    while (atual != NULL) {
+        noClausulas *proxima = atual->prox;
+
+        destruirListaLiterais(&atual->literais);
+
+        free(atual);
+        atual = proxima;
+    }
+
+    f->clausulas.inicio = NULL;
+    f->clausulas.fim = NULL;
+    f->clausulas.tamanho = 0;
+    f->qntVariaveis = 0;
+}
+
 
 int main(){
     char nomeArquivo[200];
@@ -256,6 +271,7 @@ int main(){
     }
 
     free(atribuicao);
+    destruirFormula(&f);
 
     return 0;
 }
