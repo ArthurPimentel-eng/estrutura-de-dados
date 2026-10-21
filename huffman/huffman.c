@@ -273,7 +273,7 @@ int compactar(char** dicionario, FILE *entrada, FILE *saida){
     int lixo = 0;
     if(quantidadeBits > 0){
         lixo = 8 - quantidadeBits;
-        guardadorDeBits = guardadorDeBits << lixo;   //REVISAR GARANTE QUE O LIXO ESTEJA NO final DO BYTE   
+        guardadorDeBits = guardadorDeBits << lixo;  
         fputc(guardadorDeBits, saida);
     }
 
@@ -286,8 +286,8 @@ int compactar(char** dicionario, FILE *entrada, FILE *saida){
 void montarCabecalho(unsigned int tamanhoArvore, int lixo, FILE *saida){
     unsigned char cabecalho[2];
 
-    cabecalho[0] = (lixo << 5) | (tamanhoArvore >> 8);        //REVISAR
-    cabecalho[1] = tamanhoArvore & 255;   //REVISAR 
+    cabecalho[0] = (lixo << 5) | (tamanhoArvore >> 8);      
+    cabecalho[1] = tamanhoArvore & 255;  
 
     fseek(saida, 0, SEEK_SET); 
 
